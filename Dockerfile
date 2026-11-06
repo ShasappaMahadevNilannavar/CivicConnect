@@ -21,9 +21,9 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# Create unprivileged user for security
+# Create unprivileged user and pre-create data & uploads directories with full permissions
 RUN addgroup -S civic && adduser -S civic -G civic && \
-    mkdir -p /tmp/uploads && chown -R civic:civic /tmp/uploads /app
+    mkdir -p /app/uploads /app/data && chown -R civic:civic /app
 
 # Copy compiled JAR from builder stage
 COPY --from=builder /build/target/civicconnect-1.0.0.jar app.jar

@@ -22,9 +22,20 @@ public class ChatService {
     @Value("${ai.api.key:}")
     private String configuredApiKey;
 
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
+    private HttpClient httpClient;
+
+    private synchronized HttpClient getHttpClient() {
+        if (httpClient == null) {
+            try {
+                httpClient = HttpClient.newBuilder()
+                        .connectTimeout(Duration.ofSeconds(10))
+                        .build();
+            } catch (Exception e) {
+                log.warn("Could not initialize HttpClient: {}", e.getMessage());
+            }
+        }
+        return httpClient;
+    }
 
     public ChatResponse processChat(ChatRequest request) {
         String userMsg = request.getMessage() != null ? request.getMessage().trim() : "";
@@ -62,6 +73,9 @@ public class ChatService {
     }
 
     private String callGeminiApi(String apiKey, String message, String lang, List<Map<String, String>> history) throws Exception {
+        HttpClient client = getHttpClient();
+        if (client == null) return null;
+
         String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
 
         String systemPrompt = "You are CivicBot, an intelligent and friendly AI assistant for CivicConnect (India's Community Problem Reporting & Resolution Platform). "
@@ -81,7 +95,7 @@ public class ChatService {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() == 200) {
             String body = response.body();
