@@ -128,6 +128,34 @@ The application will start on: **`http://localhost:8080`**
 
 ---
 
+## ☁️ Live Cloud Deployment Guide (Public HTTPS URL)
+
+CivicConnect is pre-configured for **1-click cloud deployment** on platforms like **Render**, **Railway**, and **AWS**.
+
+### Deploying to Render.com (Recommended — 100% Free with HTTPS)
+
+1. **Sign Up**: Go to [Render.com](https://render.com) and sign in using your GitHub account (`ShasappaMahadevNilannavar`).
+2. **Create New Web Service**:
+   - In the Render Dashboard, click **New +** → **Web Service**.
+   - Select **Build and deploy from a Git repository**.
+   - Choose your repository: `ShasappaMahadevNilannavar/CivicConnect`.
+3. **Configure Settings**:
+   - **Name**: `civicconnect` (or any custom name)
+   - **Region**: Choose the closest region (e.g., *Singapore* or *Oregon*)
+   - **Branch**: `main`
+   - **Runtime**: **Docker** (Render will automatically detect the production `Dockerfile`)
+   - **Instance Type**: **Free** ($0/month)
+4. **Environment Variables**:
+   Click **Advanced** → **Add Environment Variable**:
+   - `SPRING_PROFILES_ACTIVE`: `prod`
+   *(Optional for Cloud MySQL: Add `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` if connecting to external MySQL; otherwise, the built-in resilient production database runs automatically).*
+5. **Deploy**:
+   - Click **Create Web Service**.
+   - Render will build the Docker container, run Spring Boot, and assign a live public HTTPS address:
+     `https://civicconnect.onrender.com`
+
+---
+
 ## 🔑 Demo Test Accounts (Safe Seed Data)
 
 On first startup, `DataInitializer` seeds default categories, departments, and safe demo credentials:
