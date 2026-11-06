@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : ''}">
+    <title>3D Google Map Explorer - CivicConnect</title>
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6.5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- MapLibre GL 3D CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .gmap3d-wrapper {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 210px);
+            min-height: 580px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: #e5e3df;
+        }
+
+        #gmap3dCanvas {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Google Maps Floating Search Bar */
+        .gmap-search-card {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 100;
+            width: 380px;
+            max-width: calc(100% - 32px);
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            padding: 4px 12px;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .gmap-search-card:focus-within {
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.28);
+        }
+
+        .gmap-search-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            background: transparent;
+        }
+
+        /* Search Dropdown Suggestions */
+        .gmap-search-dropdown {
+            position: absolute;
+            top: 54px;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+            max-height: 320px;
+            overflow-y: auto;
+            z-index: 101;
+            display: none;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .gmap-search-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s ease;
+        }
+
+        .gmap-search-item:hover {
+            background: #f5f9f6;
+        }
+
+        /* Category Filter Chips */
+        .gmap-chips-bar {
+            position: absolute;
+            top: 76px;
+            left: 16px;
+            z-index: 99;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            max-width: calc(100% - 150px);
+            padding-bottom: 6px;
+            scrollbar-width: none;
+        }
+
+        .gmap-chips-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gmap-chip {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.12);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #3c4043;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .gmap-chip:hover, .gmap-chip.active {
+            background: #2e7d32;
+            color: #ffffff;
+            border-color: #2e7d32;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.35);
+        }
+
+        /* Quick City Fly-to Chips (Top Right) */
+        .gmap-cities-bar {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 99;
+            display: flex;
+            gap: 6px;
+            max-width: 50%;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .gmap-cities-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .city-pill {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0,0,0,0.1);
+            color: #1a73e8;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .city-pill:hover {
+            background: #1a73e8;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Google Maps Layer Selector (Bottom Left) */
+        .gmap-layer-card {
+            position: absolute;
+            bottom: 24px;
+            left: 20px;
+            z-index: 100;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            padding: 4px;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gmap-layer-card:hover {
+            transform: scale(1.04);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .gmap-layer-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background-size: cover;
+            background-position: center;
+            background-image: url('https://mt1.google.com/vt/lyrs=y&x=1488&y=948&z=11');
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gmap-layer-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding-right: 8px;
+            color: #3c4043;
+        }
+
+        /* Layer Popup Menu */
+        .gmap-layer-menu {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            padding: 8px;
+            display: none;
+            width: 220px;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .gmap-layer-menu.show {
+            display: block;
+        }
+
+        .gmap-layer-opt {
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #3c4043;
+            transition: background 0.15s ease;
+        }
+
+        .gmap-layer-opt:hover, .gmap-layer-opt.active {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 600;
+        }
+
+        /* Iconic Google Maps 3D & Navigation Controls (Bottom Right) */
+        .gmap-controls-group {
+            position: absolute;
+            bottom: 24px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* 3D / 2D Toggle Button */
+        .gmap-3d-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: none;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+            color: #1a73e8;
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .gmap-3d-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+            background: #f8fafc;
+        }
+
+        .gmap-3d-btn.active-3d {
+            background: #1a73e8;
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(26, 115, 232, 0.45);
+        }
+
+        /* Compass */
+        .gmap-compass-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: none;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+            color: #d32f2f;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: transform 0.2s ease;
+        }
+
+        /* Zoom & Tilt Box */
+        .gmap-nav-box {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gmap-nav-btn {
+            width: 42px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            color: #5f6368;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s ease;
+        }
+
+        .gmap-nav-btn:hover {
+            background: #f1f3f4;
+            color: #202124;
+        }
+
+        .gmap-nav-btn:not(:last-child) {
+            border-bottom: 1px solid #ebebeb;
+        }
+
+        /* Details Side Card */
+        .gmap-details-card {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            bottom: 24px;
+            width: 380px;
+            max-width: calc(100% - 32px);
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: -8px 0 35px rgba(0, 0, 0, 0.25);
+            z-index: 150;
+            overflow-y: auto;
+            transform: translateX(120%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gmap-details-card.show {
+            transform: translateX(0);
+        }
+
+        /* Custom 3D Civic Marker Pins */
+        .civic-3d-pin {
+            width: 36px;
+            height: 48px;
+            cursor: pointer;
+            position: relative;
+            transform: translate(-50%, -100%);
+            transition: transform 0.2s ease;
+        }
+
+        .civic-3d-pin:hover {
+            transform: translate(-50%, -110%) scale(1.15);
+            z-index: 1000;
+        }
+
+        .pin-radar {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(46, 125, 50, 0.3);
+            animation: pinPulse 2s infinite ease-out;
+        }
+
+        @keyframes pinPulse {
+            0% { transform: translateX(-50%) scale(0.6); opacity: 0.9; }
+            100% { transform: translateX(-50%) scale(2.2); opacity: 0; }
+        }
+
+        .maplibregl-popup-content {
+            border-radius: 16px !important;
+            padding: 14px !important;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25) !important;
+            border: none !important;
+            font-family: inherit !important;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- Header Navigation -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container-fluid px-lg-4 py-3 flex-grow-1">
+        <!-- Google Maps 3D Header Bar -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3 bg-white">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-3 d-flex align-items-center justify-content-center text-white shadow-sm" style="background: linear-gradient(135deg, #4285F4 0%, #34A853 50%, #FBBC05 75%, #EA4335 100%); width: 50px; height: 50px;">
+                        <i class="fas fa-map-marked-alt fa-lg"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h4 class="fw-bold mb-0">Google Maps 3D Civic Explorer</h4>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">
+                                <i class="fas fa-satellite me-1"></i> Photorealistic 3D Hybrid
+                            </span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold d-none d-md-inline">
+                                60° 3D Tilt View
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Explore real-world Google Satellite 3D imagery, tilt perspective, 3D buildings, and live civic complaints across Indian states & cities.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm btn-sm" id="btnToggleGmapApiModal" data-bs-toggle="modal" data-bs-target="#gmapConfigModal">
+                        <i class="fab fa-google text-primary me-1"></i> Google Cloud API Key
+                    </button>
+                    <a th:href="@{/map}" class="btn btn-outline-primary rounded-pill px-3 shadow-sm btn-sm">
+                        <i class="fas fa-map me-1"></i> 2D Public Map
+                    </a>
+                    <a th:href="@{/citizen/complaints/new}" class="btn btn-success rounded-pill px-3 shadow-sm btn-sm fw-bold">
+                        <i class="fas fa-plus-circle me-1"></i> Report Issue
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Google Maps 3D Main Canvas Wrapper -->
+        <div class="gmap3d-wrapper">
+            <!-- 3D WebGL Canvas -->
+            <div id="gmap3dCanvas"></div>
+
+            <!-- Floating Google Search Card (Top Left) -->
+            <div class="gmap-search-card">
+                <i class="fas fa-search text-muted ms-1"></i>
+                <input type="text" id="gmapSearchInput" class="gmap-search-input" placeholder="Search Google Maps India (Cities, States, Places...)" autocomplete="off">
+                <button type="button" class="btn btn-sm btn-link text-muted p-1 d-none" id="gmapSearchClearBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="vr mx-2 text-muted opacity-25"></div>
+                <button type="button" class="btn btn-sm btn-link text-primary p-1" title="Voice Search (Simulated)" onclick="alert('Google Voice Search: Speak your desired city or location.')">
+                    <i class="fas fa-microphone"></i>
+                </button>
+
+                <!-- Search Suggestions Dropdown -->
+                <div id="gmapSearchDropdown" class="gmap-search-dropdown">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Quick Category Filter Chips (Under Search Card) -->
+            <div class="gmap-chips-bar">
+                <div class="gmap-chip active" data-category="ALL">
+                    <i class="fas fa-globe-americas"></i> All Issues (<span id="countAll">0</span>)
+                </div>
+                <div class="gmap-chip" data-category="Road Damage">
+                    <i class="fas fa-road text-danger"></i> Road Damage
+                </div>
+                <div class="gmap-chip" data-category="Streetlight">
+                    <i class="fas fa-lightbulb text-warning"></i> Streetlights
+                </div>
+                <div class="gmap-chip" data-category="Garbage Overflow">
+                    <i class="fas fa-trash-alt text-success"></i> Garbage
+                </div>
+                <div class="gmap-chip" data-category="Water Leakage">
+                    <i class="fas fa-tint text-info"></i> Water Supply
+                </div>
+                <div class="gmap-chip" data-category="Drainage">
+                    <i class="fas fa-water text-primary"></i> Drainage
+                </div>
+            </div>
+
+            <!-- Quick City Fly-to Pills (Top Right) -->
+            <div class="gmap-cities-bar">
+                <span class="city-pill" data-city="delhi"><i class="fas fa-landmark me-1"></i> New Delhi</span>
+                <span class="city-pill" data-city="mumbai"><i class="fas fa-city me-1"></i> Mumbai</span>
+                <span class="city-pill" data-city="bengaluru"><i class="fas fa-microchip me-1"></i> Bengaluru</span>
+                <span class="city-pill" data-city="hyderabad"><i class="fas fa-building me-1"></i> Hyderabad</span>
+                <span class="city-pill" data-city="chennai"><i class="fas fa-umbrella-beach me-1"></i> Chennai</span>
+                <span class="city-pill" data-city="kolkata"><i class="fas fa-bridge me-1"></i> Kolkata</span>
+                <span class="city-pill" data-city="pune"><i class="fas fa-graduation-cap me-1"></i> Pune</span>
+                <span class="city-pill" data-city="ahmedabad"><i class="fas fa-industry me-1"></i> Ahmedabad</span>
+                <span class="city-pill" data-city="jaipur"><i class="fas fa-crown me-1"></i> Jaipur</span>
+                <span class="city-pill" data-city="varanasi"><i class="fas fa-om me-1"></i> Varanasi</span>
+            </div>
+
+            <!-- Layer Selector (Bottom Left) -->
+            <div class="gmap-layer-card" id="gmapLayerBtn">
+                <div class="gmap-layer-thumb" id="gmapLayerThumb"></div>
+                <div class="gmap-layer-label">
+                    <span id="currentLayerLabel">Satellite 3D</span>
+                    <i class="fas fa-chevron-up ms-1 small text-muted"></i>
+                </div>
+
+                <!-- Layer Menu -->
+                <div class="gmap-layer-menu" id="gmapLayerMenu">
+                    <div class="gmap-layer-opt active" data-layer="hybrid">
+                        <i class="fas fa-satellite text-success"></i>
+                        <div>
+                            <div>Google Hybrid 3D</div>
+                            <small class="text-muted" style="font-size:0.7rem;">Satellite + Street Names</small>
+                        </div>
+                    </div>
+                    <div class="gmap-layer-opt" data-layer="satellite">
+                        <i class="fas fa-globe text-primary"></i>
+                        <div>
+                            <div>Google Satellite</div>
+                            <small class="text-muted" style="font-size:0.7rem;">Pure Aerial Photography</small>
+                        </div>
+                    </div>
+                    <div class="gmap-layer-opt" data-layer="streets">
+                        <i class="fas fa-road text-warning"></i>
+                        <div>
+                            <div>Google Roadmap</div>
+                            <small class="text-muted" style="font-size:0.7rem;">Clear Standard Vector Streets</small>
+                        </div>
+                    </div>
+                    <div class="gmap-layer-opt" data-layer="terrain">
+                        <i class="fas fa-mountain text-secondary"></i>
+                        <div>
+                            <div>Google Terrain</div>
+                            <small class="text-muted" style="font-size:0.7rem;">Topography & Elevation</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Iconic Google 3D & Navigation Controls (Bottom Right) -->
+            <div class="gmap-controls-group">
+                <!-- Compass Dial -->
+                <button type="button" class="gmap-compass-btn" id="gmapCompassBtn" title="Reset North">
+                    <i class="fas fa-compass" id="compassIcon"></i>
+                </button>
+
+                <!-- Iconic 3D Toggle Button -->
+                <button type="button" class="gmap-3d-btn active-3d" id="gmap3dToggleBtn" title="Toggle 3D / 2D Perspective Tilt">
+                    <span id="label3d">3D</span>
+                </button>
+
+                <!-- Navigation Box (Zoom & Tilt) -->
+                <div class="gmap-nav-box">
+                    <button type="button" class="gmap-nav-btn" id="gmapZoomInBtn" title="Zoom in">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button type="button" class="gmap-nav-btn" id="gmapZoomOutBtn" title="Zoom out">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button type="button" class="gmap-nav-btn" id="gmapTiltUpBtn" title="Tilt camera up (more 3D)">
+                        <i class="fas fa-angle-double-up"></i>
+                    </button>
+                    <button type="button" class="gmap-nav-btn" id="gmapTiltDownBtn" title="Tilt camera down (flatter 2D)">
+                        <i class="fas fa-angle-double-down"></i>
+                    </button>
+                    <button type="button" class="gmap-nav-btn" id="gmapLocateBtn" title="Find my location">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                    <button type="button" class="gmap-nav-btn" id="gmapFullscreenBtn" title="Toggle Fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Slide-in Problem Details Card (Right Side) -->
+            <div class="gmap-details-card" id="gmapDetailsCard">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                    <span class="badge bg-success" id="detailStatusBadge">IN PROGRESS</span>
+                    <button type="button" class="btn btn-sm btn-light rounded-circle" id="closeDetailsCardBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-3 flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-secondary" id="detailRefId">CIV-1001</span>
+                        <span class="badge bg-light text-dark border" id="detailCategory">Road Damage</span>
+                    </div>
+                    <h5 class="fw-bold mb-2 text-dark" id="detailTitle">Severe Pothole on Main Road</h5>
+                    <p class="text-muted small mb-3" id="detailDescription">Detailed description of the civic complaint...</p>
+
+                    <div class="card bg-light border-0 rounded-3 p-2 mb-3">
+                        <div class="small text-muted mb-1"><i class="fas fa-map-marker-alt text-danger me-1"></i> Location:</div>
+                        <div class="fw-semibold small" id="detailLocation">Bengaluru, Karnataka</div>
+                        <div class="text-muted small" style="font-size:0.75rem;" id="detailCoords">12.9716° N, 77.5946° E</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between small text-muted mb-3 border-top pt-2">
+                        <span><i class="fas fa-calendar-alt me-1"></i> Reported: <span id="detailDate">Oct 24, 2026</span></span>
+                        <span><i class="fas fa-flag text-danger me-1"></i> Priority: <span id="detailPriority" class="fw-bold">HIGH</span></span>
+                    </div>
+
+                    <a href="#" id="detailViewReportBtn" class="btn btn-success w-100 rounded-pill shadow-sm fw-bold">
+                        <i class="fas fa-external-link-alt me-1"></i> View Full Report & History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Google Cloud API Key Modal -->
+    <div class="modal fade" id="gmapConfigModal" tabindex="-1" aria-labelledby="gmapConfigModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="gmapConfigModalLabel">
+                        <i class="fab fa-google text-primary me-2"></i> Google Maps Platform Integration
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info border-0 rounded-3 small">
+                        <i class="fas fa-info-circle me-1"></i> <strong>Zero-Setup Ready:</strong> CivicConnect runs with high-resolution Google Satellite 3D Hybrid tiles out of the box without requiring any API key or billing!
+                    </div>
+                    <p class="small text-muted">
+                        If you have an official Google Cloud Maps API Key with the <strong>Vector Map & 3D Photorealistic Tiles API</strong> enabled, you can optionally store it in your browser session below:
+                    </p>
+                    <div class="mb-3">
+                        <label for="googleMapsApiKeyInput" class="form-label small fw-semibold">Google Maps API Key (Optional)</label>
+                        <input type="text" class="form-control" id="googleMapsApiKeyInput" placeholder="AIzaSy...">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-semibold" id="saveGoogleApiKeyBtn">Save & Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- MapLibre GL 3D JS -->
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <!-- Google Maps 3D Engine Script -->
+    <script th:src="@{/js/map3d.js}"></script>
+</body>
+</html>

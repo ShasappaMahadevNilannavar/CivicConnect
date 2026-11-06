@@ -1,0 +1,44 @@
+# CivicConnect
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IDE ###
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+bin/
+
+### Maven ###
+.mvn/
+mvnw
+mvnw.cmd
+log/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### App ###
+uploads/
+data/
+*.mv.db
+*.lock.db
+*.trace.db
+*.log
+*.env
+!.env.example
+
+### Build ###
+build/
+out/

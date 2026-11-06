@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>CivicConnect - Community Problem Reporting & Resolution Platform</title>
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6.5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <!-- Header Navigation -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <!-- Hero Section -->
+    <section class="hero-section text-white py-5 position-relative overflow-hidden">
+        <div class="container py-lg-5 position-relative z-index-1">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-7">
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 shadow-sm" data-i18n="hero_badge">
+                        <i class="fas fa-bullhorn me-1"></i> Problem Statement 14: Civic Action Platform
+                    </span>
+                    <h1 class="display-4 fw-bold lh-sm mb-4">
+                        <span data-i18n="hero_title_1">Voice Community Problems.</span> <br>
+                        <span class="text-warning" data-i18n="hero_title_2">Track Real Resolutions.</span>
+                    </h1>
+                    <p class="lead mb-4 text-light opacity-90" data-i18n="hero_desc">
+                        CivicConnect bridges citizens and municipal administrators. Report potholes, broken streetlights, overflowing waste, and water leakages with photographic evidence and geographic coordinates. Transparent, verified, and community-driven.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a th:href="@{/citizen/complaints/new}" class="btn btn-warning btn-lg fw-bold px-4 py-3 shadow rounded-pill text-dark" data-i18n="btn_report_issue">
+                            <i class="fas fa-plus-circle me-2"></i> Report an Issue
+                        </a>
+                        <a th:href="@{/map}" class="btn btn-outline-light btn-lg px-4 py-3 rounded-pill" data-i18n="btn_explore_map">
+                            <i class="fas fa-map-marked-alt me-2"></i> Explore Public Map
+                        </a>
+                        <a th:href="@{/login}" class="btn btn-light btn-lg px-4 py-3 rounded-pill text-success fw-semibold" data-i18n="btn_track_complaint">
+                            <i class="fas fa-sign-in-alt me-2"></i> Track Complaint
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="card shadow-lg border-0 rounded-4 p-4 text-dark bg-white">
+                        <h5 class="fw-bold text-success mb-3" data-i18n="instant_reporting_title">
+                            <i class="fas fa-bolt text-warning me-2"></i> Instant Problem Reporting
+                        </h5>
+                        <p class="small text-muted mb-4" data-i18n="instant_reporting_desc">
+                            Takes less than 60 seconds to file a verified civic complaint with our 4-step workflow:
+                        </p>
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="bg-success-subtle text-success rounded-circle p-2 px-3 fw-bold me-3">1</div>
+                            <div>
+                                <h6 class="mb-1 fw-bold" data-i18n="step_1_title">Snap & Locate</h6>
+                                <p class="small text-muted mb-0" data-i18n="step_1_desc">Upload real scene photos and pinpoint on OpenStreetMap.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="bg-primary-subtle text-primary rounded-circle p-2 px-3 fw-bold me-3">2</div>
+                            <div>
+                                <h6 class="mb-1 fw-bold" data-i18n="step_2_title">Smart Review & Duplication</h6>
+                                <p class="small text-muted mb-0" data-i18n="step_2_desc">Municipal staff review and detect duplicate community issues.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="bg-warning-subtle text-warning rounded-circle p-2 px-3 fw-bold me-3">3</div>
+                            <div>
+                                <h6 class="mb-1 fw-bold" data-i18n="step_3_title">Action & Dispatch</h6>
+                                <p class="small text-muted mb-0" data-i18n="step_3_desc">Assigned to specialized department with priority tracking.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <div class="bg-success text-white rounded-circle p-2 px-3 fw-bold me-3">4</div>
+                            <div>
+                                <h6 class="mb-1 fw-bold" data-i18n="step_4_title">Citizen Verified Resolution</h6>
+                                <p class="small text-muted mb-0" data-i18n="step_4_desc">Admin uploads repair evidence; citizen verifies or disputes outcome.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Categories Grid -->
+    <section class="py-5 bg-white">
+        <div class="container py-4">
+            <div class="text-center mb-5">
+                <span class="text-success fw-bold text-uppercase small tracking-wide" data-i18n="footer_categories">Report Categories</span>
+                <h2 class="fw-bold mt-1">What can you report on CivicConnect?</h2>
+                <p class="text-muted">Direct routing to designated municipal departments</p>
+            </div>
+
+            <div class="row g-4 text-center">
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 border-0 shadow-sm p-4 category-card">
+                        <div class="icon-circle bg-success-subtle text-success mx-auto mb-3">
+                            <i class="fas fa-road fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold" data-i18n="cat_road_damage">Road Damage</h5>
+                        <p class="small text-muted mb-0">Potholes, cracks, and asphalt cave-ins</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 border-0 shadow-sm p-4 category-card">
+                        <div class="icon-circle bg-warning-subtle text-warning mx-auto mb-3">
+                            <i class="fas fa-lightbulb fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold" data-i18n="cat_streetlight">Streetlights</h5>
+                        <p class="small text-muted mb-0">Non-functional poles and dark lanes</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 border-0 shadow-sm p-4 category-card">
+                        <div class="icon-circle bg-danger-subtle text-danger mx-auto mb-3">
+                            <i class="fas fa-trash fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold" data-i18n="cat_garbage">Garbage Overflow</h5>
+                        <p class="small text-muted mb-0">Uncollected waste and open dumping</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 border-0 shadow-sm p-4 category-card">
+                        <div class="icon-circle bg-info-subtle text-info mx-auto mb-3">
+                            <i class="fas fa-tint fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold" data-i18n="cat_water_leakage">Water Leakage</h5>
+                        <p class="small text-muted mb-0">Burst mainlines and supply leakages</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 border-0 shadow-sm p-4 category-card">
+                        <div class="icon-circle bg-primary-subtle text-primary mx-auto mb-3">
+                            <i class="fas fa-water fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold" data-i18n="cat_drainage">Drainage</h5>
+                        <p class="small text-muted mb-0">Blocked storm drains and sewage spills</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 border-0 shadow-sm p-4 category-card">
+                        <div class="icon-circle bg-danger-subtle text-danger mx-auto mb-3">
+                            <i class="fas fa-shield-alt fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold" data-i18n="cat_public_safety">Public Safety</h5>
+                        <p class="small text-muted mb-0">Open manholes and exposed electric wires</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 border-0 shadow-sm p-4 category-card">
+                        <div class="icon-circle bg-secondary-subtle text-secondary mx-auto mb-3">
+                            <i class="fas fa-ellipsis-h fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold" data-i18n="cat_other">Other Civic Issues</h5>
+                        <p class="small text-muted mb-0">Parks, encroachments, and municipal queries</p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card h-100 border-0 bg-success text-white p-4 d-flex flex-column justify-content-center">
+                        <i class="fas fa-arrow-right fa-2x mb-3"></i>
+                        <h5 class="fw-bold text-white">Have an Issue?</h5>
+                        <a th:href="@{/citizen/complaints/new}" class="btn btn-light btn-sm mt-2 fw-bold text-success rounded-pill">File Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why CivicConnect Feature Section -->
+    <section class="py-5 bg-light">
+        <div class="container py-4">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <span class="text-success fw-bold text-uppercase small">Transparent Governance</span>
+                    <h2 class="fw-bold mt-1 mb-4">Built with Integrity, Accountability and Speed</h2>
+                    
+                    <div class="d-flex mb-4">
+                        <div class="feature-icon me-3 text-success">
+                            <i class="fas fa-fingerprint fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold">Immutable Status Timeline</h5>
+                            <p class="text-muted mb-0">Every transition (Submitted &rarr; Under Review &rarr; In Progress &rarr; Resolved) records timestamps, administrator notes, and immutable audit logs.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex mb-4">
+                        <div class="feature-icon me-3 text-success">
+                            <i class="fas fa-clone fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold">AI/Text & Geo Duplicate Detection</h5>
+                            <p class="text-muted mb-0">Smart matching compares category, Jaro-Winkler description similarity, and Haversine geo-distance to flag duplicates without discarding original reports.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex mb-4">
+                        <div class="feature-icon me-3 text-success">
+                            <i class="fas fa-check-double fa-2x"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold">Mandatory Evidence & Citizen Verification</h5>
+                            <p class="text-muted mb-0">No complaint can be closed blindly. Administrators must provide photographic evidence of completed repair, and citizens verify or dispute the fix.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-lg rounded-4 p-4 p-lg-5 bg-white">
+                        <h4 class="fw-bold text-dark mb-4">Platform Security & Architecture</h4>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-lock text-success me-3 fa-lg"></i>
+                                <span>BCrypt Password Hashing & Role-based Access Control</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-database text-success me-3 fa-lg"></i>
+                                <span>Normalized MySQL 8 Schema with Foreign Keys & Indexes</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-file-shield text-success me-3 fa-lg"></i>
+                                <span>MIME-type & File Size Security Validation for Uploads</span>
+                            </li>
+                            <li class="mb-3 d-flex align-items-center">
+                                <i class="fas fa-map-location-dot text-success me-3 fa-lg"></i>
+                                <span>Privacy-Safe Approximate Geographic Mapping</span>
+                            </li>
+                        </ul>
+                        <div class="alert alert-success d-flex align-items-center mb-0">
+                            <i class="fas fa-code me-2 fa-lg"></i>
+                            <small class="mb-0">Powered by <strong>Spring Boot 3.4</strong> & <strong>Thymeleaf</strong></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Banner -->
+    <section class="py-5 bg-civic-gradient text-white text-center">
+        <div class="container py-4">
+            <h2 class="display-6 fw-bold mb-3">Ready to Improve Your Neighborhood?</h2>
+            <p class="lead mb-4 opacity-90">Join active citizens making their municipal areas cleaner, brighter, and safer.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a th:href="@{/register}" class="btn btn-warning btn-lg fw-bold px-4 rounded-pill text-dark">Get Started - Free Registration</a>
+                <a th:href="@{/login}" class="btn btn-outline-light btn-lg px-4 rounded-pill">Sign In</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Admin Dashboard - CivicConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- Header Navigation -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container-fluid px-lg-4 py-4 flex-grow-1">
+        <!-- Top Banner -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+            <div>
+                <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-2 rounded-pill mb-2">
+                    <i class="fas fa-shield-alt me-1"></i> Municipal Operations Center
+                </span>
+                <h2 class="fw-bold mb-1">Administrative Overview & Analytics</h2>
+                <p class="text-muted mb-0">Live monitoring of community reports, staff assignments, and verified outcomes.</p>
+            </div>
+            <div class="mt-3 mt-md-0 d-flex gap-2">
+                <a th:href="@{/admin/complaints}" class="btn btn-outline-success rounded-pill px-3">
+                    <i class="fas fa-list me-1"></i> View All Reports
+                </a>
+                <a th:href="@{/admin/duplicates}" class="btn btn-outline-warning text-dark rounded-pill px-3">
+                    <i class="fas fa-clone me-1"></i> Review Duplicates
+                </a>
+            </div>
+        </div>
+
+        <!-- 6 Metrics Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-top border-4 border-primary">
+                    <span class="text-muted small fw-semibold">TOTAL FILED</span>
+                    <h3 class="fw-bold mt-1 mb-0" th:text="${totalComplaints}">0</h3>
+                    <small class="text-primary mt-1 d-block"><i class="fas fa-database me-1"></i> All Time</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-top border-4 border-secondary">
+                    <span class="text-muted small fw-semibold">SUBMITTED</span>
+                    <h3 class="fw-bold mt-1 mb-0" th:text="${submittedCount}">0</h3>
+                    <small class="text-secondary mt-1 d-block"><i class="fas fa-inbox me-1"></i> Unreviewed</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-top border-4 border-warning">
+                    <span class="text-muted small fw-semibold">UNDER REVIEW</span>
+                    <h3 class="fw-bold mt-1 mb-0" th:text="${underReviewCount}">0</h3>
+                    <small class="text-warning mt-1 d-block"><i class="fas fa-search me-1"></i> Investigating</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-top border-4 border-info">
+                    <span class="text-muted small fw-semibold">IN PROGRESS</span>
+                    <h3 class="fw-bold mt-1 mb-0" th:text="${inProgressCount}">0</h3>
+                    <small class="text-info mt-1 d-block"><i class="fas fa-tools me-1"></i> Crew Dispatched</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-top border-4 border-success">
+                    <span class="text-muted small fw-semibold">RESOLVED</span>
+                    <h3 class="fw-bold mt-1 mb-0" th:text="${resolvedCount}">0</h3>
+                    <small class="text-success mt-1 d-block"><i class="fas fa-check-double me-1"></i> Verified/Pending</small>
+                </div>
+            </div>
+
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-top border-4 border-danger">
+                    <span class="text-muted small fw-semibold">REJECTED</span>
+                    <h3 class="fw-bold mt-1 mb-0" th:text="${rejectedCount}">0</h3>
+                    <small class="text-danger mt-1 d-block"><i class="fas fa-ban me-1"></i> Invalid/Duplicate</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+            <!-- Status Distribution Donut Chart -->
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fas fa-chart-pie me-2 text-primary"></i>Complaints by Status</h5>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Distribution Bar Chart -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fas fa-chart-bar me-2 text-success"></i>Complaints by Category</h5>
+                    <div style="height: 280px; position: relative;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Cards Row -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+            <h5 class="fw-bold text-dark mb-3"><i class="fas fa-flag me-2 text-danger"></i>Priority Distribution</h5>
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-3" th:each="entry : ${priorityCounts}">
+                    <div class="p-3 rounded-3" th:classappend="${'bg-' + #strings.toLowerCase(entry.key) + '-subtle border border-' + #strings.toLowerCase(entry.key)}">
+                        <span class="small fw-bold d-block text-uppercase" th:text="${entry.key}">CRITICAL</span>
+                        <h4 class="fw-bold mb-0 mt-1" th:text="${entry.value}">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Complaints Table -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="fas fa-tasks me-2 text-success"></i>Recent Problem Reports</h5>
+                <a th:href="@{/admin/complaints}" class="btn btn-outline-success btn-sm rounded-pill">Manage All Reports</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase text-secondary">
+                        <tr>
+                            <th class="ps-4">Reference ID</th>
+                            <th>Title</th>
+                            <th>Citizen</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c : ${recentComplaints}">
+                            <td class="ps-4">
+                                <span class="badge bg-secondary-subtle text-secondary border font-monospace" th:text="${c.referenceId}">CC-20261101-A101</span>
+                            </td>
+                            <td class="fw-semibold" th:text="${c.title}">Title here</td>
+                            <td th:text="${c.user.name}">Citizen Name</td>
+                            <td>
+                                <i th:class="${c.category.icon + ' me-1 text-muted'}"></i>
+                                <span th:text="${c.category.name}">Road Damage</span>
+                            </td>
+                            <td>
+                                <span th:if="${c.priority != null}" th:class="${'badge badge-priority-' + #strings.toLowerCase(c.priority)}" th:text="${c.priority}">HIGH</span>
+                                <span th:if="${c.priority == null}" class="badge bg-light text-muted border">Unset</span>
+                            </td>
+                            <td>
+                                <span th:class="${'badge badge-status-' + #strings.toLowerCase(c.status)}" th:text="${c.status.displayName}">Submitted</span>
+                            </td>
+                            <td class="text-muted small" th:text="${#temporals.format(c.createdAt, 'MMM dd, yyyy')}">Date</td>
+                            <td class="text-end pe-4">
+                                <a th:href="@{'/admin/complaints/' + ${c.referenceId}}" class="btn btn-sm btn-success rounded-pill px-3">
+                                    <i class="fas fa-edit me-1"></i> Manage
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js 4.4 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', function () {
+            // Status Chart
+            var statusCounts = /*[[${statusCounts}]]*/ {};
+            var statusLabels = Object.keys(statusCounts);
+            var statusData = Object.values(statusCounts);
+
+            var ctxStatus = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: [
+                            '#757575', '#F57F17', '#1565C0', '#FF9800', '#7B1FA2', '#2E7D32', '#D32F2F'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+
+            // Category Chart
+            var categoryCounts = /*[[${categoryCounts}]]*/ {};
+            var catLabels = Object.keys(categoryCounts);
+            var catData = Object.values(categoryCounts);
+
+            var ctxCategory = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctxCategory, {
+                type: 'bar',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        label: 'Total Reports',
+                        data: catData,
+                        backgroundColor: '#4CAF50',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { ticks: { font: { size: 11 } } }
+                    }
+                }
+            });
+        });
+        /*]]>*/
+    </script>
+</body>
+</html>

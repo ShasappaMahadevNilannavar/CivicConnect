@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Manage Reports - CivicConnect Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- Header Navigation -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container-fluid px-lg-4 py-4 flex-grow-1">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">Community Problem Reports Queue</h2>
+                <p class="text-muted mb-0">Review citizen submissions, set priorities, assign departments, and record resolutions.</p>
+            </div>
+            <div class="mt-3 mt-md-0 d-flex gap-2">
+                <a th:href="@{/admin/dashboard}" class="btn btn-outline-secondary rounded-pill">
+                    <i class="fas fa-arrow-left me-1"></i> Dashboard
+                </a>
+                <a th:href="@{/admin/duplicates}" class="btn btn-warning text-dark rounded-pill fw-semibold">
+                    <i class="fas fa-clone me-1"></i> Check Duplicates
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+            <form th:action="@{/admin/complaints}" method="get" class="row g-2 align-items-center">
+                <!-- Search -->
+                <div class="col-md-4 col-lg-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" name="search" th:value="${currentSearch}" placeholder="Reference ID or title...">
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-md-3 col-lg-2">
+                    <select class="form-select" name="status">
+                        <option value="">All Statuses</option>
+                        <option th:each="st : ${statuses}" th:value="${st.name()}" th:text="${st.displayName}" th:selected="${currentStatus == st.name()}">Submitted</option>
+                    </select>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="col-md-3 col-lg-2">
+                    <select class="form-select" name="category">
+                        <option value="">All Categories</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${currentCategory == cat.id.toString()}">Road Damage</option>
+                    </select>
+                </div>
+
+                <!-- Priority Filter -->
+                <div class="col-md-2 col-lg-2">
+                    <select class="form-select" name="priority">
+                        <option value="">All Priorities</option>
+                        <option th:each="pr : ${priorities}" th:value="${pr.name()}" th:text="${pr.name()}" th:selected="${currentPriority == pr.name()}">HIGH</option>
+                    </select>
+                </div>
+
+                <!-- Buttons -->
+                <div class="col-md-12 col-lg-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-success flex-grow-1 rounded-pill">Apply Filters</button>
+                    <a th:if="${currentSearch != null or currentStatus != null or currentCategory != null or currentPriority != null}" 
+                       th:href="@{/admin/complaints}" class="btn btn-outline-secondary rounded-pill" title="Reset Filters">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table Card -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <span class="text-muted small">
+                    Showing <strong th:text="${complaints.numberOfElements}">0</strong> of <strong th:text="${complaints.totalElements}">0</strong> records
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light small text-uppercase text-secondary">
+                        <tr>
+                            <th class="ps-4">Reference ID</th>
+                            <th>Problem Title</th>
+                            <th>Citizen</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Reported On</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${complaints.totalElements == 0}">
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fas fa-search fa-3x mb-3 d-block text-secondary"></i>
+                                <h5>No complaints found matching the filters</h5>
+                                <a th:href="@{/admin/complaints}" class="btn btn-outline-secondary btn-sm rounded-pill mt-2">Reset Filters</a>
+                            </td>
+                        </tr>
+
+                        <tr th:each="c : ${complaints.content}">
+                            <td class="ps-4">
+                                <span class="badge bg-secondary-subtle text-secondary border font-monospace" th:text="${c.referenceId}">CC-20261101-A101</span>
+                            </td>
+                            <td>
+                                <a th:href="@{'/admin/complaints/' + ${c.referenceId}}" class="text-decoration-none fw-bold text-dark hover-green d-block" th:text="${c.title}">
+                                    Pothole near market
+                                </a>
+                                <small class="text-muted text-truncate d-block" style="max-width: 320px;" th:text="${c.description}">Description...</small>
+                            </td>
+                            <td>
+                                <span class="fw-semibold d-block text-dark" th:text="${c.user.name}">Citizen Name</span>
+                                <small class="text-muted" th:text="${c.user.email}">citizen@example.com</small>
+                            </td>
+                            <td>
+                                <i th:class="${c.category.icon + ' me-1 text-muted'}"></i>
+                                <span th:text="${c.category.name}">Road Damage</span>
+                            </td>
+                            <td>
+                                <span th:if="${c.priority != null}" th:class="${'badge badge-priority-' + #strings.toLowerCase(c.priority)}" th:text="${c.priority}">HIGH</span>
+                                <span th:if="${c.priority == null}" class="badge bg-light text-muted border">Unset</span>
+                            </td>
+                            <td>
+                                <span th:class="${'badge badge-status-' + #strings.toLowerCase(c.status)}" th:text="${c.status.displayName}">Under Review</span>
+                            </td>
+                            <td class="text-muted small" th:text="${#temporals.format(c.createdAt, 'MMM dd, yyyy')}">Nov 01, 2026</td>
+                            <td class="text-end pe-4">
+                                <a th:href="@{'/admin/complaints/' + ${c.referenceId}}" class="btn btn-sm btn-success rounded-pill px-3">
+                                    <i class="fas fa-tasks me-1"></i> Review
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${complaints.totalPages > 1}" class="card-footer bg-white border-0 d-flex justify-content-center py-3">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination mb-0">
+                        <li class="page-item" th:classappend="${complaints.first ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/complaints(page=${complaints.number - 1}, search=${currentSearch}, status=${currentStatus}, category=${currentCategory}, priority=${currentPriority})}">&laquo; Previous</a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, complaints.totalPages - 1)}" th:classappend="${i == complaints.number ? 'active' : ''}">
+                            <a class="page-link" th:href="@{/admin/complaints(page=${i}, search=${currentSearch}, status=${currentStatus}, category=${currentCategory}, priority=${currentPriority})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${complaints.last ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/admin/complaints(page=${complaints.number + 1}, search=${currentSearch}, status=${currentStatus}, category=${currentCategory}, priority=${currentPriority})}">Next &raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>

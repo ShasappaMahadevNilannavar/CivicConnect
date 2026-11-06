@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Report New Issue - CivicConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Leaflet 1.9.4 CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- Header Navigation -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container py-4 flex-grow-1">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <a th:href="@{/citizen/dashboard}" class="text-decoration-none text-muted small">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                        </a>
+                        <h2 class="fw-bold mt-1 mb-0">File a Community Problem Report</h2>
+                    </div>
+                    <span class="badge bg-success-subtle text-success p-2 px-3 rounded-pill">
+                        <i class="fas fa-shield-halved me-1"></i> Anonymous to Public
+                    </span>
+                </div>
+
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 bg-white">
+                    <form th:action="@{/citizen/complaints}" th:object="${complaintRequest}" method="post" enctype="multipart/form-data">
+                        
+                        <!-- 1. Issue Details -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-success mb-3 pb-2 border-bottom">
+                                <i class="fas fa-info-circle me-2"></i>1. Issue Information
+                            </h5>
+
+                            <!-- Title -->
+                            <div class="mb-3">
+                                <label for="title" class="form-label fw-semibold small"><span data-i18n="form_title">Complaint Title</span> <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" th:field="*{title}" maxlength="200" placeholder="e.g. Broken streetlight on Elm street junction" data-i18n-placeholder="form_title_placeholder" required>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">Be concise and specific.</small>
+                                    <small id="titleCounter" class="text-muted">0 / 200</small>
+                                </div>
+                                <div th:if="${#fields.hasErrors('title')}" th:errors="*{title}" class="text-danger small mt-1"></div>
+                            </div>
+
+                            <!-- Category -->
+                            <div class="mb-3">
+                                <label for="categoryId" class="form-label fw-semibold small"><span data-i18n="form_category">Category</span> <span class="text-danger">*</span></label>
+                                <select class="form-select" id="categoryId" th:field="*{categoryId}" required>
+                                    <option value="" disabled selected data-i18n="form_select_category">-- Select a Problem Category --</option>
+                                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">Road Damage</option>
+                                </select>
+                                <small class="text-muted">Routes your report directly to the responsible municipal department.</small>
+                                <div th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}" class="text-danger small mt-1"></div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label fw-semibold small"><span data-i18n="form_description">Detailed Description</span> <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="description" th:field="*{description}" rows="4" maxlength="2000" placeholder="Describe the hazard, its extent, and how long it has persisted..." data-i18n-placeholder="form_description_placeholder" required></textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">Include helpful landmarks or severity details.</small>
+                                    <small id="descriptionCounter" class="text-muted">0 / 2000</small>
+                                </div>
+                                <div th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="text-danger small mt-1"></div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Photo Evidence -->
+                        <div class="mb-4">
+                            <h5 class="fw-bold text-success mb-3 pb-2 border-bottom">
+                                <i class="fas fa-camera me-2"></i>2. Photographic Evidence
+                            </h5>
+                            <div class="mb-3">
+                                <label for="images" class="form-label fw-semibold small">Upload Pictures (Up to 5 images, max 5MB each)</label>
+                                <input type="file" class="form-control" id="images" name="images" multiple accept="image/*" data-preview-target="imagePreviewRow">
+                                <small class="text-muted">Accepted formats: JPG, PNG, WEBP, GIF. Photos significantly increase resolution speed.</small>
+                            </div>
+                            <!-- Live Thumbnail Preview Row -->
+                            <div id="imagePreviewRow" class="row g-2 mt-2"></div>
+                        </div>
+
+                        <!-- 3. Geographic Pinpoint (Leaflet & OSM) -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <h5 class="fw-bold text-success mb-0">
+                                    <i class="fas fa-map-marker-alt me-2"></i>3. Location Pinpoint (OpenStreetMap)
+                                </h5>
+                                <button type="button" id="useCurrentLocationBtn" class="btn btn-sm btn-outline-success rounded-pill">
+                                    <i class="fas fa-crosshairs me-1"></i> Use My Location
+                                </button>
+                            </div>
+
+                            <p class="small text-muted mb-2">
+                                Click anywhere on the map to drop a marker at the exact location of the hazard.
+                            </p>
+
+                            <!-- Leaflet Map Container -->
+                            <div id="locationPickerMap" class="rounded-3 shadow-sm mb-3" style="height: 360px; width: 100%;"></div>
+
+                            <!-- Hidden Coords Fields -->
+                            <input type="hidden" id="latitude" th:field="*{latitude}">
+                            <input type="hidden" id="longitude" th:field="*{longitude}">
+
+                            <!-- Location Description / Landmark -->
+                            <div class="mb-3">
+                                <label for="locationDescription" class="form-label fw-semibold small">Location Description / Nearby Landmark (Optional)</label>
+                                <input type="text" class="form-control" id="locationDescription" th:field="*{locationDescription}" placeholder="e.g. Opposite City Hospital Main Gate, Ward 4">
+                                <small class="text-muted">Public map only shows the general vicinity; private citizen residence details are never revealed.</small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-3 mt-4">
+                            <a th:href="@{/citizen/dashboard}" class="btn btn-outline-secondary px-4 rounded-pill" data-i18n="form_cancel">Cancel</a>
+                            <button type="submit" class="btn btn-success btn-lg px-5 rounded-pill fw-bold shadow-sm" data-i18n="form_submit">
+                                <i class="fas fa-paper-plane me-2"></i> Submit Complaint
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initLocationPicker('locationPickerMap', 'latitude', 'longitude', 'locationDescription');
+        });
+    </script>
+</body>
+</html>

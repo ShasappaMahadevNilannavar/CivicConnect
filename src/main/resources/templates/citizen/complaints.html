@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>My Complaints - CivicConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- Header Navigation -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container py-4 flex-grow-1">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">My Problem Reports</h2>
+                <p class="text-muted mb-0">Search, monitor live resolution progress, and verify completed municipal fixes.</p>
+            </div>
+            <div class="mt-3 mt-md-0">
+                <a th:href="@{/citizen/complaints/new}" class="btn btn-success rounded-pill px-4 shadow-sm fw-bold">
+                    <i class="fas fa-plus me-1"></i> File New Report
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+            <form th:action="@{/citizen/complaints}" method="get" class="row g-2 align-items-center">
+                <div class="col-md-6 col-lg-7">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0" name="search" th:value="${currentSearch}" placeholder="Search by Reference ID (e.g. CC-20261101) or title...">
+                    </div>
+                </div>
+
+                <div class="col-md-4 col-lg-3">
+                    <select class="form-select" name="status">
+                        <option value="">All Statuses</option>
+                        <option th:each="st : ${statuses}" th:value="${st.name()}" th:text="${st.displayName}" th:selected="${currentStatus == st.name()}">Submitted</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-success w-100 rounded-pill">Filter</button>
+                    <a th:if="${currentSearch != null or currentStatus != null}" th:href="@{/citizen/complaints}" class="btn btn-outline-secondary rounded-pill" title="Clear Filters">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Counter -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted small">
+                Showing <strong th:text="${complaints.numberOfElements}">0</strong> of <strong th:text="${complaints.totalElements}">0</strong> reports
+            </span>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${complaints.totalElements == 0}" class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+            <i class="fas fa-inbox text-muted fa-4x mb-3"></i>
+            <h4 class="fw-bold">No reports found</h4>
+            <p class="text-muted small">You haven't filed any complaints matching the filter criteria.</p>
+            <div class="d-flex justify-content-center gap-2">
+                <a th:href="@{/citizen/complaints}" class="btn btn-outline-secondary btn-sm rounded-pill">Reset Filters</a>
+                <a th:href="@{/citizen/complaints/new}" class="btn btn-success btn-sm rounded-pill px-4">Submit a Complaint</a>
+            </div>
+        </div>
+
+        <!-- Complaint Cards Grid -->
+        <div th:if="${complaints.totalElements > 0}" class="row g-3">
+            <div th:each="c : ${complaints.content}" class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white hover-card">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                        <div class="mb-2 mb-md-0">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-secondary-subtle text-secondary border font-monospace" th:text="${c.referenceId}">CC-20261101-A101</span>
+                                <button type="button" class="btn btn-sm btn-link text-muted p-0" title="Copy Reference ID" th:data-ref="${c.referenceId}" onclick="copyRefId(this.dataset.ref)">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                                <span class="badge bg-light text-dark border">
+                                    <i th:class="${c.category.icon + ' me-1 text-success'}"></i>
+                                    <span th:text="${c.category.name}">Road Damage</span>
+                                </span>
+                                <span th:class="${'badge badge-status-' + #strings.toLowerCase(c.status)}" th:text="${c.status.displayName}">Submitted</span>
+                                <span th:if="${c.priority != null}" th:class="${'badge badge-priority-' + #strings.toLowerCase(c.priority)}" th:text="${c.priority}">HIGH</span>
+                            </div>
+                            <h5 class="fw-bold mb-1">
+                                <a th:href="@{'/citizen/complaints/' + ${c.referenceId}}" class="text-decoration-none text-dark" th:text="${c.title}">Pothole on Main Road</a>
+                            </h5>
+                            <p class="text-muted small mb-2 text-truncate" style="max-width: 750px;" th:text="${c.description}">Deep road depression...</p>
+                            
+                            <div class="d-flex flex-wrap gap-3 small text-muted">
+                                <span><i class="fas fa-calendar-alt me-1"></i> <span th:text="${#temporals.format(c.createdAt, 'MMM dd, yyyy HH:mm')}">Nov 01, 2026</span></span>
+                                <span th:if="${c.locationDescription != null and not #strings.isEmpty(c.locationDescription)}">
+                                    <i class="fas fa-map-marker-alt me-1 text-danger"></i> <span th:text="${c.locationDescription}">Near Park</span>
+                                </span>
+                                <span th:if="${not #lists.isEmpty(c.images)}">
+                                    <i class="fas fa-paperclip me-1"></i> <span th:text="${#lists.size(c.images)} + ' photos'">1 photos</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="mt-3 mt-md-0 d-flex flex-md-column gap-2 text-md-end">
+                            <a th:href="@{'/citizen/complaints/' + ${c.referenceId}}" class="btn btn-outline-success btn-sm rounded-pill px-4">
+                                <i class="fas fa-route me-1"></i> Track Status
+                            </a>
+                            <span th:if="${c.status.name() == 'RESOLVED_PENDING_VERIFICATION'}" class="badge bg-warning text-dark">
+                                <i class="fas fa-bell me-1"></i> Action Required: Verify
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${complaints.totalPages > 1}" class="d-flex justify-content-center mt-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item" th:classappend="${complaints.first ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/citizen/complaints(page=${complaints.number - 1}, search=${currentSearch}, status=${currentStatus})}">&laquo; Previous</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, complaints.totalPages - 1)}" th:classappend="${i == complaints.number ? 'active' : ''}">
+                        <a class="page-link" th:href="@{/citizen/complaints(page=${i}, search=${currentSearch}, status=${currentStatus})}" th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${complaints.last ? 'disabled' : ''}">
+                        <a class="page-link" th:href="@{/citizen/complaints(page=${complaints.number + 1}, search=${currentSearch}, status=${currentStatus})}">Next &raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>

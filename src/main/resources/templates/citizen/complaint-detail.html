@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="'Report ' + ${complaint.referenceId} + ' - CivicConnect'">Complaint Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- Header Navigation -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <main class="container py-4 flex-grow-1">
+        <!-- Breadcrumb & Top Bar -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a th:href="@{/citizen/dashboard}" class="text-success text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/citizen/complaints}" class="text-success text-decoration-none">My Reports</a></li>
+                    <li class="breadcrumb-item active font-monospace" aria-current="page" th:text="${complaint.referenceId}">CC-20261101-A101</li>
+                </ol>
+            </nav>
+            <div class="mt-2 mt-md-0">
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" th:data-ref="${complaint.referenceId}" onclick="copyRefId(this.dataset.ref)">
+                    <i class="far fa-copy me-1"></i> Copy Reference ID
+                </button>
+            </div>
+        </div>
+
+        <!-- Flash messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> <span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Main Title & Badges Header -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="badge bg-secondary-subtle text-secondary border font-monospace px-3 py-2" th:text="${complaint.referenceId}">CC-20261101-A101</span>
+                        <span class="badge bg-light text-dark border px-3 py-2">
+                            <i th:class="${complaint.category.icon + ' me-1 text-success'}"></i>
+                            <span th:text="${complaint.category.name}">Road Damage</span>
+                        </span>
+                        <span th:class="${'badge px-3 py-2 badge-status-' + #strings.toLowerCase(complaint.status)}" th:text="${complaint.status.displayName}">
+                            In Progress
+                        </span>
+                        <span th:if="${complaint.priority != null}" th:class="${'badge px-3 py-2 badge-priority-' + #strings.toLowerCase(complaint.priority)}" th:text="${'Priority: ' + complaint.priority}">
+                            Priority: HIGH
+                        </span>
+                    </div>
+                    <h3 class="fw-bold mb-1" th:text="${complaint.title}">Pothole repair on Oak Street Junction</h3>
+                    <small class="text-muted">
+                        <i class="far fa-clock me-1"></i> Filed on <span th:text="${#temporals.format(complaint.createdAt, 'MMMM dd, yyyy HH:mm')}">Nov 01, 2026 10:30</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column: Details, Photos, Map -->
+            <div class="col-lg-8">
+                <!-- Description Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h5 class="fw-bold text-success mb-3 pb-2 border-bottom">
+                        <i class="fas fa-align-left me-2"></i>Issue Description
+                    </h5>
+                    <p class="text-dark lh-base" style="white-space: pre-wrap;" th:text="${complaint.description}">
+                        Detailed description of the issue...
+                    </p>
+                </div>
+
+                <!-- Photos Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h5 class="fw-bold text-success mb-3 pb-2 border-bottom">
+                        <i class="fas fa-camera me-2"></i>Attached Evidence Photos
+                    </h5>
+                    <div th:if="${#lists.isEmpty(complaint.images)}" class="text-muted small py-3">
+                        <i class="fas fa-image-slash me-1"></i> No photos attached to this report.
+                    </div>
+                    <div th:if="${not #lists.isEmpty(complaint.images)}" class="row g-3">
+                        <div th:each="img : ${complaint.images}" class="col-6 col-md-4">
+                            <div class="card h-100 border rounded-3 overflow-hidden shadow-sm">
+                                <a th:href="@{'/uploads/' + ${img.fileName}}" target="_blank">
+                                    <img th:src="@{'/uploads/' + ${img.fileName}}" class="card-img-top" alt="Evidence" style="height: 160px; object-fit: cover;">
+                                </a>
+                                <div class="card-body p-2 text-center bg-light">
+                                    <small class="text-truncate d-block text-muted" th:text="${img.originalFileName}">photo.jpg</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OpenStreetMap Location Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h5 class="fw-bold text-success mb-3 pb-2 border-bottom">
+                        <i class="fas fa-map-marker-alt me-2"></i>Geographic Location
+                    </h5>
+                    <div th:if="${complaint.locationDescription != null and not #strings.isEmpty(complaint.locationDescription)}" class="alert alert-light border small mb-3">
+                        <i class="fas fa-landmark text-success me-2"></i>
+                        <strong>Landmark / Locality:</strong> <span th:text="${complaint.locationDescription}">Near Central Park Entrance</span>
+                    </div>
+
+                    <div th:if="${complaint.latitude != null and complaint.longitude != null}">
+                        <div id="detailMap" class="rounded-3 shadow-sm" style="height: 300px; width: 100%;"></div>
+                        <small class="text-muted mt-2 d-block">
+                            Coordinates: <span th:text="${complaint.latitude} + ', ' + ${complaint.longitude}">12.9716, 77.5946</span>
+                        </small>
+                    </div>
+                    <div th:if="${complaint.latitude == null or complaint.longitude == null}" class="text-muted small py-2">
+                        <i class="fas fa-map-pin text-secondary me-1"></i> No exact GPS coordinates were provided for this report.
+                    </div>
+                </div>
+
+                <!-- CITIZEN RESOLUTION VERIFICATION CARD -->
+                <!-- Only active when status is RESOLVED_PENDING_VERIFICATION -->
+                <div th:if="${complaint.status.name() == 'RESOLVED_PENDING_VERIFICATION'}" class="card border-warning shadow rounded-4 p-4 mb-4 bg-warning-subtle">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-circle bg-warning text-dark p-2 rounded-circle me-2">
+                            <i class="fas fa-exclamation fa-lg"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-0">Citizen Resolution Verification Required</h5>
+                    </div>
+                    <p class="text-dark small mb-3">
+                        Municipal staff marked this issue as repaired. Please inspect the site and confirm whether the hazard is satisfactorily resolved or dispute the claim.
+                    </p>
+
+                    <form th:action="@{'/citizen/complaints/' + ${complaint.referenceId} + '/feedback'}" th:object="${feedbackRequest}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-dark small">Has this problem been satisfactorily resolved? <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="resYes" th:field="*{resolved}" value="true" required>
+                                    <label class="form-check-label fw-semibold text-success" for="resYes">
+                                        <i class="fas fa-check-circle me-1"></i> Yes, Issue is Fully Resolved
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="resNo" th:field="*{resolved}" value="false" required>
+                                    <label class="form-check-label fw-semibold text-danger" for="resNo">
+                                        <i class="fas fa-times-circle me-1"></i> No, Issue is Still Unresolved (Dispute)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comments" class="form-label fw-bold text-dark small">Verification Comments & Observations <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="comments" th:field="*{comments}" rows="3" placeholder="Provide notes on the state of the repair or reasons for disputing..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning text-dark fw-bold px-4 rounded-pill shadow-sm">
+                            <i class="fas fa-paper-plane me-1"></i> Submit Resolution Verification
+                        </button>
+                    </form>
+                </div>
+
+                <!-- If already verified -->
+                <div th:if="${feedback != null}" class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h5 class="fw-bold text-success mb-3 pb-2 border-bottom">
+                        <i class="fas fa-comment-check me-2"></i>Citizen Verification Feedback
+                    </h5>
+                    <div class="alert" th:classappend="${feedback.resolved ? 'alert-success' : 'alert-danger'}">
+                        <div class="d-flex justify-content-between">
+                            <strong>
+                                <i th:class="${feedback.resolved ? 'fas fa-check-circle me-1' : 'fas fa-times-circle me-1'}"></i>
+                                <span th:text="${feedback.resolved ? 'Confirmed Satisfactorily Resolved' : 'Resolution Disputed by Citizen'}">Confirmed</span>
+                            </strong>
+                            <small class="text-muted" th:text="${#temporals.format(feedback.createdAt, 'MMM dd, yyyy HH:mm')}">Date</small>
+                        </div>
+                        <p class="mb-0 mt-2 small" th:text="${feedback.comments}">Citizen comments here...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Status Timeline & Metadata -->
+            <div class="col-lg-4">
+                <!-- Status Timeline Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                    <h5 class="fw-bold text-success mb-3 pb-2 border-bottom">
+                        <i class="fas fa-stream me-2"></i>Status History Timeline
+                    </h5>
+
+                    <div class="timeline">
+                        <div th:each="hist : ${statusHistory}" class="timeline-item pb-3 position-relative ps-4 mb-3 border-start border-2 border-success">
+                            <div class="timeline-dot position-absolute top-0 start-0 translate-middle bg-success rounded-circle" style="width: 14px; height: 14px; border: 3px solid white;"></div>
+                            <div>
+                                <span th:class="${'badge badge-status-' + #strings.toLowerCase(hist.newStatus)}" th:text="${hist.newStatus.displayName}">
+                                    Under Review
+                                </span>
+                                <small class="text-muted d-block mt-1" th:text="${#temporals.format(hist.createdAt, 'MMM dd, yyyy HH:mm')}">Nov 01, 2026</small>
+                                <p class="small text-dark mt-1 mb-0" th:text="${hist.notes}">Notes entered...</p>
+                                <small class="text-secondary d-block mt-1">
+                                    <i class="fas fa-user-edit me-1"></i> Updated by: <span th:text="${hist.changedBy != null ? hist.changedBy.name : 'System'}">Admin</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Problem Summary Info Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <h6 class="fw-bold text-secondary mb-3 text-uppercase small">Report Metadata</h6>
+                    <ul class="list-unstyled small mb-0">
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Report ID:</span>
+                            <span class="font-monospace fw-bold" th:text="${complaint.referenceId}">CC-20261101-A101</span>
+                        </li>
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Category:</span>
+                            <span class="fw-semibold" th:text="${complaint.category.name}">Road Damage</span>
+                        </li>
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Current Status:</span>
+                            <span class="fw-bold" th:text="${complaint.status.displayName}">In Progress</span>
+                        </li>
+                        <li class="mb-2 d-flex justify-content-between">
+                            <span class="text-muted">Priority:</span>
+                            <span class="fw-bold" th:text="${complaint.priority != null ? complaint.priority : 'Unassigned'}">HIGH</span>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span class="text-muted">Last Updated:</span>
+                            <span th:text="${#temporals.format(complaint.updatedAt, 'MMM dd, yyyy')}">Nov 02, 2026</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', function() {
+            var lat = /*[[${complaint.latitude}]]*/ null;
+            var lng = /*[[${complaint.longitude}]]*/ null;
+            var title = /*[[${complaint.title}]]*/ 'Reported Issue';
+
+            if (lat && lng && document.getElementById('detailMap')) {
+                var map = L.map('detailMap').setView([lat, lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                L.marker([lat, lng]).addTo(map).bindPopup('<strong>' + title + '</strong>').openPopup();
+            }
+        });
+        /*]]>*/
+    </script>
+</body>
+</html>

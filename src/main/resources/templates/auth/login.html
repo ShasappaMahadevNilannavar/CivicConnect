@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title>Login - CivicConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="d-flex flex-column min-vh-100 bg-light">
+
+    <!-- Header Navigation -->
+    <div th:replace="~{fragments/header :: header}"></div>
+
+    <div class="container my-auto py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5 bg-white">
+                    <div class="text-center mb-4">
+                        <div class="icon-circle bg-success-subtle text-success mx-auto mb-3" style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-landmark fa-2x"></i>
+                        </div>
+                        <h3 class="fw-bold">Sign In to CivicConnect</h3>
+                        <p class="text-muted small">Access your citizen dashboard or administrator portal</p>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Invalid email or password. Please try again.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    <div th:if="${param.logout}" class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i> You have been successfully signed out.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    <div th:if="${param.registered}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i> Registration successful! You can now sign in with your credentials.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form th:action="@{/login}" method="post">
+                        <!-- CSRF automatically injected by Thymeleaf with th:action -->
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control rounded-3" id="username" name="username" placeholder="name@example.com" required autofocus>
+                            <label for="username"><i class="fas fa-envelope text-muted me-2"></i>Email Address</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control rounded-3" id="password" name="password" placeholder="Password" required>
+                            <label for="password"><i class="fas fa-lock text-muted me-2"></i>Password</label>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="remember-me" name="remember-me">
+                                <label class="form-check-label small text-muted" for="remember-me">Remember me</label>
+                            </div>
+                            <a href="#" class="small text-success text-decoration-none" onclick="alert('For demo accounts, please see seeded credentials in the box below.')">Forgot password?</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-sm mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i> Sign In
+                        </button>
+
+                        <div class="text-center text-muted small">
+                            Don't have an account? <a th:href="@{/register}" class="text-success fw-bold text-decoration-none">Register here</a>
+                        </div>
+                    </form>
+
+                    <!-- Demo credentials box for hackathon judges -->
+                    <div class="mt-4 p-3 bg-light rounded-3 border">
+                        <small class="fw-bold text-dark d-block mb-1"><i class="fas fa-key text-warning me-1"></i> Demo Test Accounts:</small>
+                        <div class="small text-secondary mb-1">
+                            <strong>Admin:</strong> <code>admin@civicconnect.com</code> / <code>Admin@123</code>
+                        </div>
+                        <div class="small text-secondary">
+                            <strong>Citizen:</strong> <code>citizen@civicconnect.com</code> / <code>Citizen@123</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<nav th:fragment="header" class="navbar navbar-expand-lg navbar-dark navbar-civic bg-civic-gradient sticky-top shadow-sm" style="background: #1b5e20 linear-gradient(135deg, #1b5e20 0%, #2e7d32 60%, #1565c0 100%) !important; background-color: #1b5e20 !important; color: #ffffff !important;">
+    <div class="container-fluid px-lg-4">
+        <a class="navbar-brand d-flex align-items-center fw-bold text-white" th:href="@{/}">
+            <span class="brand-icon me-2"><i class="fas fa-landmark"></i></span>
+            <span>Civic<span class="text-warning">Connect</span></span>
+        </a>
+
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#civicNavbar" aria-controls="civicNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="civicNavbar">
+            <!-- Left Navigation (Role-based) -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link text-white" th:href="@{/}" data-i18n="nav_home"><i class="fas fa-home me-1"></i> Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" th:href="@{/map}" data-i18n="nav_map"><i class="fas fa-map-marked-alt me-1"></i> Public Map</a>
+                </li>
+
+                <!-- Citizen links -->
+                <li class="nav-item" sec:authorize="hasRole('CITIZEN')">
+                    <a class="nav-link text-white" th:href="@{/citizen/dashboard}" data-i18n="nav_dashboard"><i class="fas fa-chart-line me-1"></i> Dashboard</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('CITIZEN')">
+                    <a class="nav-link text-white" th:href="@{/citizen/complaints/new}" data-i18n="nav_report"><i class="fas fa-plus-circle me-1"></i> Report Issue</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('CITIZEN')">
+                    <a class="nav-link text-white" th:href="@{/citizen/complaints}" data-i18n="nav_my_complaints"><i class="fas fa-clipboard-list me-1"></i> My Complaints</a>
+                </li>
+
+                <!-- Admin links -->
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link text-white" th:href="@{/admin/dashboard}" data-i18n="nav_admin_dashboard"><i class="fas fa-tachometer-alt me-1"></i> Admin Dashboard</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link text-white" th:href="@{/admin/complaints}" data-i18n="nav_manage_reports"><i class="fas fa-tasks me-1"></i> Manage Reports</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link text-white" th:href="@{/admin/duplicates}" data-i18n="nav_duplicates"><i class="fas fa-clone me-1"></i> Duplicate Review</a>
+                </li>
+            </ul>
+
+            <!-- Right Navigation (Language + Auth & Profile) -->
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+                <!-- 22 Indian Languages + English Selector -->
+                <li class="nav-item dropdown me-lg-2 my-1 my-lg-0">
+                    <button class="btn btn-sm lang-selector-btn rounded-pill px-3 py-1 d-flex align-items-center gap-1 shadow-sm" type="button" id="languageSelectorBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Change Language / भाषा बदलें">
+                        <i class="fas fa-globe text-warning me-1"></i>
+                        <span id="currentLangLabel" class="fw-semibold">English</span>
+                        <i class="fas fa-chevron-down ms-1 small opacity-75"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end language-dropdown-menu p-2 shadow-lg border-0" aria-labelledby="languageSelectorBtn">
+                        <div class="lang-search-wrapper mb-2">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0"><i class="fas fa-search text-muted"></i></span>
+                                <input type="text" id="langSearchInput" class="form-control form-control-sm border-0 bg-light" placeholder="Search language..." data-i18n-placeholder="search_language" autocomplete="off">
+                            </div>
+                        </div>
+                        <div id="languageListContainer" class="d-flex flex-column gap-1">
+                            <!-- Populated dynamically with all 22 Scheduled Indian languages + English -->
+                        </div>
+                    </div>
+                </li>
+
+                <!-- Anonymous / Not logged in -->
+                <li class="nav-item" sec:authorize="isAnonymous()">
+                    <a class="nav-link text-white" th:href="@{/login}" data-i18n="nav_login"><i class="fas fa-sign-in-alt me-1"></i> Login</a>
+                </li>
+                <li class="nav-item" sec:authorize="isAnonymous()">
+                    <a class="btn btn-warning btn-sm text-dark fw-bold ms-lg-2 px-3 rounded-pill shadow-sm" th:href="@{/register}" data-i18n="nav_register">
+                        <i class="fas fa-user-plus me-1"></i> Register
+                    </a>
+                </li>
+
+                <!-- Authenticated user -->
+                <!-- Notification Bell -->
+                <li class="nav-item me-2" sec:authorize="isAuthenticated()">
+                    <a th:href="@{/citizen/notifications}" class="nav-link text-white position-relative" title="Notifications" data-i18n-title="nav_notifications">
+                        <i class="fas fa-bell fa-lg"></i>
+                        <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                            0
+                        </span>
+                    </a>
+                </li>
+
+                <!-- User Dropdown -->
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle text-white d-flex align-items-center" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="user-avatar-circle me-2 bg-white text-success fw-bold">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <span sec:authentication="name" class="fw-semibold">User</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userMenu">
+                        <li sec:authorize="hasRole('CITIZEN')">
+                            <a class="dropdown-item" th:href="@{/citizen/profile}" data-i18n="nav_profile"><i class="fas fa-user-circle me-2 text-primary"></i> My Profile</a>
+                        </li>
+                        <li sec:authorize="hasRole('CITIZEN')">
+                            <a class="dropdown-item" th:href="@{/citizen/notifications}" data-i18n="nav_notifications"><i class="fas fa-bell me-2 text-warning"></i> Notifications</a>
+                        </li>
+                        <li sec:authorize="hasRole('ADMIN')">
+                            <span class="dropdown-item-text text-muted small"><i class="fas fa-shield-alt me-1"></i> Administrator Role</span>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" class="d-inline">
+                                <button type="submit" class="dropdown-item text-danger" data-i18n="nav_logout">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!-- Universal Multilingual Script Included in Header Fragment -->
+    <script th:src="@{/js/i18n.js}"></script>
+    <!-- AI-Powered Multilingual Chatbot Script Included in Header Fragment -->
+    <script th:src="@{/js/chatbot.js}"></script>
+</nav>
+</body>
+</html>
