@@ -1792,3 +1792,302 @@ body.rtl-mode .me-3 {
     border-radius: 16px;
   }
 }
+
+/* =======================================================
+   CivicAI Chatbot - Advanced Multilingual & Voice Upgrades
+   ======================================================= */
+
+/* Bot Message Action Buttons (TTS Speaker, Copy) */
+.bot-message-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 88%;
+  animation: civicMsgSlide 0.25s ease-out;
+}
+
+.bot-message-wrapper .bot-message {
+  width: 100%;
+}
+
+.bot-msg-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-left: 6px;
+}
+
+.bot-action-btn {
+  background: transparent;
+  border: none;
+  color: #757575;
+  font-size: 0.78rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.bot-action-btn:hover {
+  color: #2e7d32;
+  background: rgba(46, 125, 50, 0.08);
+}
+
+.bot-action-btn.speaking {
+  color: #d32f2f;
+  animation: civicPulseSpeak 1.2s infinite;
+}
+
+@keyframes civicPulseSpeak {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.75; }
+}
+
+/* Microphone Button & Recording Pulse */
+.mic-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid #ced4da;
+  background: #f8f9fa;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.mic-btn:hover {
+  background: #e9ecef;
+  color: #2e7d32;
+  border-color: #81c784;
+}
+
+.mic-btn.recording {
+  background: #d32f2f !important;
+  color: #ffffff !important;
+  border-color: #b71c1c !important;
+  box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7);
+  animation: micRecordingPulse 1.2s infinite;
+}
+
+@keyframes micRecordingPulse {
+  0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
+}
+
+/* Theme Switcher Button */
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.theme-toggle-btn:hover {
+  opacity: 0.8;
+}
+
+/* Interactive Complaint Flow UI */
+.complaint-flow-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.category-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.category-chip-btn {
+  background: #f1f8e9;
+  border: 1px solid #c5e1a5;
+  color: #1b5e20;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.category-chip-btn:hover {
+  background: #2e7d32;
+  color: #ffffff;
+  border-color: #2e7d32;
+  transform: translateY(-1px);
+}
+
+.confirm-summary-table {
+  font-size: 0.82rem;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.confirm-summary-table td {
+  padding: 4px 6px;
+  vertical-align: top;
+}
+
+.confirm-summary-table td.label-col {
+  font-weight: 600;
+  color: #495057;
+  width: 32%;
+}
+
+.complaint-success-box {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border: 1px solid #81c784;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
+
+.tracking-ref-badge {
+  display: inline-block;
+  background: #1b5e20;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 1.05rem;
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  margin: 6px 0;
+}
+
+/* =======================================================
+   Dark Theme for Chatbot
+   ======================================================= */
+.chatbot-window.dark-theme {
+  background: #1a1a1a;
+  border-color: #333333;
+}
+
+.chatbot-window.dark-theme .chatbot-header {
+  background: linear-gradient(135deg, #0d3311 0%, #1b5e20 60%, #0d2847 100%);
+  border-bottom: 1px solid #333333;
+}
+
+.chatbot-window.dark-theme .chatbot-messages {
+  background: #121212;
+}
+
+.chatbot-window.dark-theme .bot-message {
+  background: #242424;
+  color: #e0e0e0;
+  border-color: #383838;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.chatbot-window.dark-theme .user-message {
+  background: linear-gradient(135deg, #1b5e20 0%, #0d3311 100%);
+  color: #ffffff;
+}
+
+.chatbot-window.dark-theme .chatbot-suggestions {
+  background: #1a1a1a !important;
+  border-top-color: #333333 !important;
+}
+
+.chatbot-window.dark-theme .suggestion-chip {
+  background: #242424;
+  color: #81c784;
+  border-color: #383838;
+}
+
+.chatbot-window.dark-theme .suggestion-chip:hover {
+  background: #2e7d32;
+  color: #ffffff;
+}
+
+.chatbot-window.dark-theme .chatbot-footer {
+  background: #1a1a1a !important;
+  border-top-color: #333333 !important;
+}
+
+.chatbot-window.dark-theme .chatbot-footer input {
+  background: #242424;
+  border-color: #444444;
+  color: #ffffff;
+}
+
+.chatbot-window.dark-theme .chatbot-footer input::placeholder {
+  color: #888888;
+}
+
+.chatbot-window.dark-theme .mic-btn {
+  background: #242424;
+  border-color: #444444;
+  color: #cccccc;
+}
+
+.chatbot-window.dark-theme .mic-btn:hover {
+  background: #333333;
+  color: #81c784;
+}
+
+.chatbot-window.dark-theme .bot-action-btn {
+  color: #aaaaaa;
+}
+
+.chatbot-window.dark-theme .bot-action-btn:hover {
+  color: #81c784;
+  background: rgba(129, 199, 132, 0.12);
+}
+
+.chatbot-window.dark-theme .complaint-flow-card {
+  background: #242424;
+  border-color: #383838;
+  color: #e0e0e0;
+}
+
+.chatbot-window.dark-theme .category-chip-btn {
+  background: #1b381e;
+  border-color: #2e7d32;
+  color: #a5d6a7;
+}
+
+.chatbot-window.dark-theme .category-chip-btn:hover {
+  background: #2e7d32;
+  color: #ffffff;
+}
+
+.chatbot-window.dark-theme .confirm-summary-table td.label-col {
+  color: #b0bec5;
+}
+
+.chatbot-window.dark-theme .complaint-success-box {
+  background: linear-gradient(135deg, #1b381e 0%, #152c17 100%);
+  border-color: #2e7d32;
+  color: #e0e0e0;
+}
+
+.chatbot-window.dark-theme .typing-indicator {
+  background: #242424;
+  border-color: #383838;
+}
+
+.chatbot-window.dark-theme .typing-indicator span {
+  background: #aaaaaa;
+}
