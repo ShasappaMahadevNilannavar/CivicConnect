@@ -12,10 +12,10 @@ import java.util.List;
 
 @Entity
 @Table(name = "complaints", indexes = {
-        @Index(name = "idx_complaint_reference_id", columnList = "referenceId"),
+        @Index(name = "idx_complaint_reference_id", columnList = "reference_id"),
         @Index(name = "idx_complaint_status", columnList = "status"),
         @Index(name = "idx_complaint_priority", columnList = "priority"),
-        @Index(name = "idx_complaint_created_at", columnList = "createdAt")
+        @Index(name = "idx_complaint_created_at", columnList = "created_at")
 })
 public class Complaint {
 
